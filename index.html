@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Neels AI Avatar — v0.1</title>
+<title>Neels AI Avatar — v0.2</title>
 <style>
 :root{color-scheme:dark;--bg:#07111f;--panel:#0d1b2d;--line:#25405e;--cyan:#4fdcff;--text:#eaf4ff;--muted:#9cb1c9}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#142b46,#050a12 70%);color:var(--text);font:15px system-ui,Segoe UI,Arial,sans-serif;min-height:100vh}
@@ -34,14 +34,14 @@ footer{max-width:1180px;margin:0 auto;padding:0 18px 24px;color:#7890a9;font-siz
 </style>
 </head>
 <body>
-<header><div><div class="brand">NEELS <span>AI AVATAR</span></div><div class="tag">Interactive 3D assistant · prototype v0.1</div></div><div class="pill" id="state">VIEWER READY</div></header>
+<header><div><div class="brand">NEELS <span>AI AVATAR</span></div><div class="tag">Interactive 3D assistant · prototype v0.2</div></div><div class="pill" id="state">VIEWER READY</div></header>
 <main>
 <section class="card">
  <div class="cardhead"><h1>Full-body character viewer</h1><span class="pill">3D MODEL SLOT</span></div>
  <div id="stage">
   <canvas id="scene"></canvas>
   <div id="fallback"><img id="reference" src="character-reference.png" alt="Character reference"></div>
-  <div id="model-note"><strong>Character model not loaded.</strong> Load a rigged .glb/.gltf model below to enable true 3D rotation. The image shown is the visual reference, not a 3D model.</div>
+  <div id="model-note"><strong>Character model not loaded.</strong> Load a rigged .glb/.gltf model below to enable true 3D rotation. The bundled rigged GLB model is loading; the image is a fallback reference.</div>
  </div>
  <div class="controls">
   <label class="filelabel" for="modelFile">Load 3D model (.glb/.gltf)</label><input id="modelFile" type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json">
@@ -82,9 +82,8 @@ let loadedModel=null;
 function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
 new ResizeObserver(resize).observe(stage);resize();
 function frame(){requestAnimationFrame(frame);controls.update();renderer.render(scene,camera)}frame();
-document.querySelector('#modelFile').addEventListener('change',e=>{
- const file=e.target.files?.[0];if(!file)return;
- const url=URL.createObjectURL(file);document.querySelector('#state').textContent='LOADING MODEL…';
+function loadModelFromUrl(url, revoke=false){
+ document.querySelector('#state').textContent='LOADING MODEL…';
  new GLTFLoader().load(url,g=>{
   if(loadedModel)scene.remove(loadedModel);
   loadedModel=g.scene;scene.add(loadedModel);
@@ -93,9 +92,14 @@ document.querySelector('#modelFile').addEventListener('change',e=>{
   const b2=new THREE.Box3().setFromObject(loadedModel);controls.target.set(0,b2.getSize(new THREE.Vector3()).y*.48,0);
   camera.position.set(0,b2.getSize(new THREE.Vector3()).y*.55,Math.max(3.2,b2.getSize(new THREE.Vector3()).y*2.2));controls.update();
   document.querySelector('#fallback').style.display='none';document.querySelector('#model-note').innerHTML='<strong>3D model loaded.</strong> Drag to orbit; pinch or scroll to zoom.';
-  document.querySelector('#state').textContent='3D MODEL LOADED';URL.revokeObjectURL(url);
- },undefined,err=>{console.error(err);document.querySelector('#state').textContent='MODEL ERROR';document.querySelector('#model-note').textContent='Could not load this file. Try a valid .glb file.';URL.revokeObjectURL(url)});
+  document.querySelector('#state').textContent='3D MODEL LOADED';if(revoke)URL.revokeObjectURL(url);
+ },undefined,err=>{console.error(err);document.querySelector('#state').textContent='MODEL ERROR';document.querySelector('#model-note').textContent='Could not load this file. Try a valid .glb file.';if(revoke)URL.revokeObjectURL(url)});
+}
+document.querySelector('#modelFile').addEventListener('change',e=>{
+ const file=e.target.files?.[0];if(!file)return;loadModelFromUrl(URL.createObjectURL(file),true);
 });
+// Load the model bundled with this project by default.
+loadModelFromUrl('./avatar.glb');
 document.querySelector('#reset').onclick=()=>{camera.position.set(0,1.3,5.5);controls.target.set(0,1,0);controls.update()};
 let refVisible=true;document.querySelector('#toggleRef').onclick=()=>{refVisible=!refVisible;document.querySelector('#fallback').style.display=refVisible?'flex':'none';document.querySelector('#toggleRef').textContent=refVisible?'Hide reference':'Show reference'};
 const log=document.querySelector('#chatlog');
