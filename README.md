@@ -1,26 +1,30 @@
-# Neels AI Avatar — v0.1 browser prototype
+# Neels AI Avatar — v0.2
 
-## What this version does
-- Responsive browser-based 3D viewer using Three.js.
-- Loads a local `.glb` or `.gltf` model in the browser.
-- Supports orbit, zoom and camera reset.
-- Shows the supplied 2D character reference until a real model is loaded.
-- Includes a UI prototype for text chat, browser text-to-speech and optional speech recognition.
+This update bundles the uploaded GLB character model and attempts to load it automatically in the Three.js viewer.
 
-## What is not connected yet
-- The uploaded photo is not a 3D model.
-- AI chat is not connected to a language model.
-- Voice is a browser demonstration only; there is no dedicated voice service or lip-sync yet.
-- This is not yet an Android APK or floating overlay.
+## Files
+- `index.html` — interactive browser viewer.
+- `avatar.glb` — the supplied 3D model.
+- `character-reference.png` — reference image fallback.
+- `README.md` — setup instructions.
 
-## Run it
-Because the app uses JavaScript modules, open it from a local web server or host it as a static website (for example, GitHub Pages). Opening `index.html` directly as a file may block module imports.
+## Features
+- Loads the bundled GLB model automatically when hosted from a web server.
+- Orbit camera, zoom, and reset controls.
+- Optional manual GLB/GLTF upload to test another model.
+- Browser speech demo and local-only chat UI.
 
-1. Create a GitHub repository.
-2. Upload `index.html`, `README.md`, and `character-reference.png` to the repository root.
-3. In repository Settings, enable GitHub Pages from the main branch/root.
-4. Open the Pages URL in a modern browser.
-5. Use “Load 3D model (.glb/.gltf)” to load a rigged GLB model you own or are licensed to use.
+## Publish from a phone
+1. Extract this ZIP.
+2. Create a GitHub repository named `neels-ai-avatar`.
+3. Upload all four files to the repository root (do not put them in a nested folder).
+4. In repository Settings → Pages, publish from the main branch and root folder.
+5. Open the GitHub Pages URL in Chrome. Allow a few seconds for the model and Three.js modules to load.
 
-## Next development step
-Obtain/generate a photorealistic rigged human model as GLB. Prefer facial blendshapes/morph targets for future lip-sync. Then connect the AI service through a backend so secret API keys are never placed in browser code.
+## Important limitations
+- This is a browser prototype, not an Android APK.
+- The GLB contains a skin/skeleton and an animation track, but detailed facial blendshapes/lip-sync and actual AI connectivity still need to be checked and integrated.
+- Chat is not connected to an AI backend; voice uses browser features only.
+- For an AI service, connect through a backend and do not put private API keys into `index.html`.
+
+If the character appears too large or too small, the viewer's auto-fit can be tuned in `index.html`.
