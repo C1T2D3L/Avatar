@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Neels AI Avatar — v0.2</title>
+<title>Neels AI Avatar — v0.3</title>
 <style>
 :root{color-scheme:dark;--bg:#07111f;--panel:#0d1b2d;--line:#25405e;--cyan:#4fdcff;--text:#eaf4ff;--muted:#9cb1c9}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#142b46,#050a12 70%);color:var(--text);font:15px system-ui,Segoe UI,Arial,sans-serif;min-height:100vh}
@@ -34,7 +34,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 18px 24px;color:#7890a9;font-siz
 </style>
 </head>
 <body>
-<header><div><div class="brand">NEELS <span>AI AVATAR</span></div><div class="tag">Interactive 3D assistant · prototype v0.2</div></div><div class="pill" id="state">VIEWER READY</div></header>
+<header><div><div class="brand">NEELS <span>AI AVATAR</span></div><div class="tag">Interactive 3D assistant · prototype v0.3</div></div><div class="pill" id="state">VIEWER READY</div></header>
 <main>
 <section class="card">
  <div class="cardhead"><h1>Full-body character viewer</h1><span class="pill">3D MODEL SLOT</span></div>
@@ -50,12 +50,12 @@ footer{max-width:1180px;margin:0 auto;padding:0 18px 24px;color:#7890a9;font-siz
 </section>
 <aside class="side">
  <section class="card"><div class="cardhead"><h2>Assistant controls</h2><span class="pill">DEMO</span></div><div class="pad">
-  <p class="muted">This prototype establishes the viewer interface. AI replies and voice output need a configured backend/API key; no key is embedded in this page.</p>
+  <p class="muted">Chat is now interactive in local demo mode. Real AI replies still require a private backend/API connection; never put an API key in this public page.</p>
   <div class="row"><button id="mic">🎙 Voice input</button><button id="speak" class="primary">Test voice</button></div>
   <div id="voiceStatus" class="status">Voice input availability depends on your browser.</div>
   <div class="chatlog" id="chatlog"><div class="bubble">Hello! I'm the avatar interface prototype. Load a 3D model to begin testing the viewer.</div></div>
   <form class="chatform" id="chatform"><input id="message" placeholder="Type a message…" autocomplete="off"><button class="primary" type="submit">Send</button></form>
-  <div class="status" id="chatStatus">Demo mode: messages are local only; AI is not connected yet.</div>
+  <div class="status" id="chatStatus">Local demo assistant is active. This is not connected to a live AI model yet.</div>
  </div></section>
  <section class="card"><div class="cardhead"><h2>Model requirements</h2></div><div class="pad">
   <p class="muted">Best results: a human character in GLB format, real scale, PBR materials, and a rig. For speech animation, facial blendshapes/morph targets are strongly recommended.</p>
@@ -63,9 +63,12 @@ footer{max-width:1180px;margin:0 auto;padding:0 18px 24px;color:#7890a9;font-siz
  </div></section>
 </aside>
 </main>
-<footer>v0.1 is a browser prototype, not the finished Android app. The current reference image is 2D; true 3D movement requires a 3D model file.</footer>
+<footer>v0.3 is a browser prototype, not the finished Android app. The bundled GLB is a real 3D model. Chat uses local demo replies until a secure AI backend is configured.</footer>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
+</script>
 <script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import * as THREE from 'three';
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 const canvas=document.querySelector('#scene'),stage=document.querySelector('#stage');
@@ -84,6 +87,7 @@ new ResizeObserver(resize).observe(stage);resize();
 function frame(){requestAnimationFrame(frame);controls.update();renderer.render(scene,camera)}frame();
 function loadModelFromUrl(url, revoke=false){
  document.querySelector('#state').textContent='LOADING MODEL…';
+ document.querySelector('#model-note').textContent='Loading 3D model: '+url;
  new GLTFLoader().load(url,g=>{
   if(loadedModel)scene.remove(loadedModel);
   loadedModel=g.scene;scene.add(loadedModel);
@@ -93,18 +97,19 @@ function loadModelFromUrl(url, revoke=false){
   camera.position.set(0,b2.getSize(new THREE.Vector3()).y*.55,Math.max(3.2,b2.getSize(new THREE.Vector3()).y*2.2));controls.update();
   document.querySelector('#fallback').style.display='none';document.querySelector('#model-note').innerHTML='<strong>3D model loaded.</strong> Drag to orbit; pinch or scroll to zoom.';
   document.querySelector('#state').textContent='3D MODEL LOADED';if(revoke)URL.revokeObjectURL(url);
- },undefined,err=>{console.error(err);document.querySelector('#state').textContent='MODEL ERROR';document.querySelector('#model-note').textContent='Could not load this file. Try a valid .glb file.';if(revoke)URL.revokeObjectURL(url)});
+ },undefined,err=>{console.error(err);document.querySelector('#state').textContent='MODEL ERROR';document.querySelector('#model-note').innerHTML='<strong>Model failed to load.</strong> Check that avatar.glb is in the same folder as index.html, that GitHub Pages has finished publishing, and that the file is a valid GLB. Details: '+(err?.message||'unknown loader error');if(revoke)URL.revokeObjectURL(url)});
 }
 document.querySelector('#modelFile').addEventListener('change',e=>{
  const file=e.target.files?.[0];if(!file)return;loadModelFromUrl(URL.createObjectURL(file),true);
 });
-// Load the model bundled with this project by default.
-loadModelFromUrl('./avatar.glb');
+// Load the bundled model relative to this page (works on GitHub Pages project URLs).
+loadModelFromUrl(new URL('./avatar.glb', window.location.href).href);
 document.querySelector('#reset').onclick=()=>{camera.position.set(0,1.3,5.5);controls.target.set(0,1,0);controls.update()};
 let refVisible=true;document.querySelector('#toggleRef').onclick=()=>{refVisible=!refVisible;document.querySelector('#fallback').style.display=refVisible?'flex':'none';document.querySelector('#toggleRef').textContent=refVisible?'Hide reference':'Show reference'};
 const log=document.querySelector('#chatlog');
 function addBubble(t,who=''){const d=document.createElement('div');d.className='bubble '+who;d.textContent=t;log.appendChild(d);log.scrollTop=log.scrollHeight}
-document.querySelector('#chatform').addEventListener('submit',e=>{e.preventDefault();const input=document.querySelector('#message');const t=input.value.trim();if(!t)return;addBubble(t,'you');input.value='';addBubble('This is a UI prototype. AI responses will be enabled when a backend is connected.');});
+function demoReply(t){const q=t.toLowerCase();if(/hello|hi\b|hey/.test(q))return 'Hello! I’m here. You can ask me about this avatar project or what we should build next.';if(/who are you|your name/.test(q))return 'I’m your Neels AI Avatar prototype. My 3D model is loaded in the viewer; a live AI brain will be connected in a later release.';if(/model|glb|3d|rotate|load/.test(q))return 'The viewer loads avatar.glb from the same folder as index.html. You can drag to orbit and use pinch or scroll to zoom. If loading fails, check the model status message below the viewer.';if(/voice|speak|microphone|talk/.test(q))return 'Use Test voice for a browser-generated English voice sample. The microphone button uses browser speech recognition when supported. Full AI voice conversation and lip-sync are not connected yet.';if(/help|next|build|version/.test(q))return 'Next we should confirm the 3D model loads on your phone, then connect a secure AI backend and add facial animation and lip-sync.';return 'I received: “'+t+'”. This local demo can answer basic project questions, but it is not yet connected to a live AI model. The next upgrade is a secure AI backend.';}
+document.querySelector('#chatform').addEventListener('submit',e=>{e.preventDefault();const input=document.querySelector('#message');const t=input.value.trim();if(!t)return;addBubble(t,'you');input.value='';addBubble(demoReply(t));});
 document.querySelector('#speak').onclick=()=>{if(!('speechSynthesis'in window)){document.querySelector('#voiceStatus').textContent='Text-to-speech is not supported in this browser.';return}const u=new SpeechSynthesisUtterance("Hello. I'm your AI avatar. My voice and conversation system will be connected in a later milestone.");u.lang='en-US';u.rate=0.95;speechSynthesis.cancel();speechSynthesis.speak(u);document.querySelector('#voiceStatus').textContent='Playing browser English voice sample.'};
 document.querySelector('#mic').onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){document.querySelector('#voiceStatus').textContent='Speech recognition is unavailable in this browser. Try a supported browser or use typing for now.';return}const r=new SR();r.lang='en-US';r.interimResults=false;r.onstart=()=>document.querySelector('#voiceStatus').textContent='Listening…';r.onresult=e=>{document.querySelector('#message').value=e.results[0][0].transcript;document.querySelector('#voiceStatus').textContent='Speech captured. Press Send to add it to the demo chat.'};r.onerror=e=>document.querySelector('#voiceStatus').textContent='Microphone issue: '+e.error;r.start()};
 </script>
